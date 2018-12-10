@@ -80,8 +80,9 @@ impl Package {
 
     pub fn task(&self) -> Result<Task> {
         Task::new(
-            self.manifest.url().clone(),
-            Work::path(Some(self.root.clone()), self.manifest.main()),
+            self.root().to_str().unwrap(),
+            self.manifest.url().clone().as_str(),
+            Work::path(self.manifest.main()),
         )
     }
 }

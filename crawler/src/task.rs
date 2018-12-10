@@ -11,16 +11,16 @@ use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum Work {
-    Path(Option<PathBuf>, String),
+    Path(String),
 }
 
 impl Work {
-    pub fn path<T: AsRef<Path>, S: AsRef<str>>(root: Option<T>, path: S) -> Work {
-        let root = match root {
-            Some(root) => Some(root.as_ref().to_path_buf()),
-            None => None,
-        };
-        Work::Path(root, path.as_ref().to_owned())
+    pub fn path<T: AsRef<str>>(path: T) -> Work {
+        // let root = match root {
+        //     Some(root) => Some(root.as_ref().to_path_buf()),
+        //     None => None,
+        // };
+        Work::Path(path.as_ref().to_string())
     }
 }
 
@@ -30,13 +30,19 @@ pub struct Task {
     #[serde(with = "url_serde")]
     url: Url,
     work: Work,
+    root: String,
 }
 
 impl Task {
-    pub fn new<T: AsRef<str>>(url: T, work: Work) -> Result<Task> {
+    pub fn new<T: AsRef<str>>(root: T, url: T, work: Work) -> Result<Task> {
         let url = Url::parse(url.as_ref())?;
         let id = Uuid::new_v4();
-        Ok(Task { work, url, id })
+        Ok(Task {
+            work,
+            url,
+            id,
+            root: root.as_ref().to_string(),
+        })
     }
 
     pub fn url(&self) -> &Url {
@@ -61,12 +67,22 @@ impl Task {
         &self.id
     }
 
+    pub fn set_root(&mut self, root: String) -> &mut Self {
+        self.root = root;
+        self
+    }
+
+    pub fn root(&self) -> &str {
+        self.root.as_str()
+    }
+
     pub fn into_parse_task(self, html: &str) -> ParseTask {
         ParseTask {
             id: self.id,
             url: self.url,
             html: html.to_owned(),
             work: self.work,
+            root: self.root,
         }
     }
 }
@@ -82,7 +98,7 @@ impl<'de> FromDuktape<'de> for Task {
         let work_p = t.get::<_, duktape::types::Ref>("work")?;
 
         let work = match work_p.get_type() {
-            Type::String => Work::Path(None, work_p.get::<String>()?),
+            Type::String => Work::Path(work_p.get::<String>()?),
             _ => return Err(DukErrorKind::TypeError(format!("invalid error")).into()),
         };
 
@@ -95,7 +111,18 @@ impl<'de> FromDuktape<'de> for Task {
             Uuid::new_v4()
         };
 
-        Ok(Task { id, url, work })
+        let root = if t.has("root") && t.get::<_, Ref>("root").unwrap().is(Type::String) {
+            t.get::<_, String>("root")?
+        } else {
+            "".to_string()
+        };
+
+        Ok(Task {
+            id,
+            url,
+            work,
+            root,
+        })
     }
 }
 
@@ -105,11 +132,7 @@ impl ToDuktape for Task {
 
         let w = ctx.create::<duktape::types::Object>()?;
         match self.work {
-            Work::Path(r, p) => {
-                let p = match r {
-                    None => p,
-                    Some(r) => r.join(p).into_os_string().into_string().unwrap(),
-                };
+            Work::Path(p) => {
                 w.set("type", "path");
                 w.set("value", p);
             }
@@ -117,6 +140,7 @@ impl ToDuktape for Task {
 
         o.set("url", self.url.as_str()).set("work", w);
         o.set("id", self.id.to_hyphenated().to_string());
+        o.set("root", self.root);
 
         ctx.push(o)?;
 
@@ -130,6 +154,7 @@ pub struct ParseTask {
     pub(crate) url: Url,
     pub(crate) html: String,
     pub(crate) work: Work,
+    pub(crate) root: String,
 }
 
 impl<'de> FromDuktape<'de> for ParseTask {
@@ -143,7 +168,7 @@ impl<'de> FromDuktape<'de> for ParseTask {
         let work_p = t.get::<_, duktape::types::Ref>("work")?;
 
         let work = match work_p.get_type() {
-            Type::String => Work::Path(None, work_p.get::<String>()?),
+            Type::String => Work::Path(work_p.get::<String>()?),
             _ => return Err(DukErrorKind::TypeError(format!("invalid error")).into()),
         };
 
@@ -158,11 +183,14 @@ impl<'de> FromDuktape<'de> for ParseTask {
 
         let html = t.get::<_, String>("html").unwrap_or("".to_string());
 
+        let root = t.get::<_, String>("root")?;
+
         Ok(ParseTask {
             id,
             url,
             work,
             html,
+            root,
         })
     }
 }
@@ -173,11 +201,7 @@ impl ToDuktape for ParseTask {
 
         let w = ctx.create::<duktape::types::Object>()?;
         match self.work {
-            Work::Path(r, p) => {
-                let p = match r {
-                    None => p,
-                    Some(r) => r.join(p).into_os_string().into_string().unwrap(),
-                };
+            Work::Path(p) => {
                 w.set("type", "path");
                 w.set("value", p);
             }
@@ -186,6 +210,7 @@ impl ToDuktape for ParseTask {
         o.set("url", self.url.as_str()).set("work", w);
         o.set("id", self.id.to_hyphenated().to_string());
         o.set("html", self.html);
+        o.set("root", self.root);
 
         ctx.push(o)?;
 
@@ -199,11 +224,7 @@ impl ToDuktape for &ParseTask {
 
         let w = ctx.create::<duktape::types::Object>()?;
         match &self.work {
-            Work::Path(r, p) => {
-                let p = match r {
-                    None => p.clone(),
-                    Some(r) => r.join(p).into_os_string().into_string().unwrap(),
-                };
+            Work::Path(p) => {
                 w.set("type", "path");
                 w.set("value", p);
             }
@@ -212,6 +233,7 @@ impl ToDuktape for &ParseTask {
         o.set("url", self.url.as_str()).set("work", w);
         o.set("id", self.id.to_hyphenated().to_string());
         o.set("html", &self.html);
+        o.set("root", &self.root);
 
         ctx.push(o)?;
 

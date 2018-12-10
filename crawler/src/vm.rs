@@ -2,6 +2,7 @@ use super::cheerio::CHEERIO_SOURCE;
 use super::error::Result;
 use super::queue::TaskQueue;
 use super::task::{ParseTask, Task, Work};
+use super::utils;
 use super::utils::measure;
 use crossbeam_channel::Sender;
 use duktape::error::{ErrorKind, Result as DukResult};
@@ -22,7 +23,7 @@ impl VM {
     pub fn new(sender: Sender<Task>) -> Result<VM> {
         let ctx = Context::new()?;
 
-        let mut builder = duktape_cjs::RequireBuilder::new();
+        let mut builder = duktape_cjs::Builder::new();
 
         builder.module("cheerio", |ctx: &Context| {
             let module: Object = ctx.get(-1)?;
@@ -39,7 +40,18 @@ impl VM {
         class.method(
             "push",
             (1, |ctx: &Context, _this: &mut class::Instance| {
-                let task = ctx.get::<Task>(0)?;
+                let mut task = ctx.get::<Task>(0)?;
+
+                let root = ctx
+                    .push_this()
+                    .get_prop_string(-1, "parentTask")
+                    .get_prop_string(-1, "root")
+                    .get::<&str>(-1)?;
+
+                if task.root() == "" {
+                    task.set_root(root.to_string());
+                }
+
                 let sender = ctx.data()?.get::<SenderKey>().unwrap();
                 sender.send(task);
                 ctx.push_current_function();
@@ -60,29 +72,11 @@ impl VM {
         Ok(VM { ctx })
     }
 
-    fn build_queue<'a>(&'a self) -> duktape::class::Builder<'a> {
-        let mut class = duktape::class::build();
-
-        class.method(
-            "push",
-            (1, |ctx: &Context, _this: &mut class::Instance| {
-                let task = ctx.get::<Task>(0)?;
-                let sender = ctx.data()?.get::<SenderKey>().unwrap();
-                sender.send(task);
-                //queue.borrow_mut().push(task);
-                ctx.push_current_function();
-                Ok(1)
-            }),
-        );
-
-        class
-    }
-
     fn build_context(ctx: &Context) -> Result<()> {
         let mut class = duktape::class::build();
 
         class
-            .constructor((1, |ctx: &Context, this: &mut class::Instance| {
+            .constructor((1, |ctx: &Context, _this: &mut class::Instance| {
                 //let obj = ctx.push_this().getp::<Object>()?;
                 let task = ctx.get::<Ref>(0)?;
                 ctx.push_this().getp::<Object>()?.set("task", task);
@@ -111,17 +105,19 @@ impl VM {
             .construct(0)?
             .getp::<Object>()?;
 
+        queue.set("parentTask", task);
+
         let module = match &task.work {
-            Work::Path(r, p) => {
-                let p = match r {
-                    None => p.clone(),
-                    Some(r) => r.join(p).into_os_string().into_string().unwrap(),
-                };
-                self.ctx.eval_main(p)?
+            Work::Path(p) => {
+                let path = utils::join(&task.root, p)?;
+                let (elapsed, module) = measure(|| self.ctx.eval_main(&path));
+                let module = module?;
+                info!("script {:?} evaluated in {:?}", path, elapsed);
+                module
             }
         };
 
-        let mut exports = module.get::<_, Function>("exports")?;
+        let exports = module.get::<_, Function>("exports")?;
 
         let cheerio = self
             .ctx
@@ -134,17 +130,6 @@ impl VM {
         let instance = instance?;
         info!("dom loaded in {:?}", elapsed);
 
-        // let context = self.ctx.create::<Object>()?;
-
-        // context.set(
-        //     "log",
-        //     (1, |ctx: &Context| {
-        //         let s = ctx.get::<Ref>(0)?;
-        //         println!("{}", s);
-        //         Ok(0)
-        //     }),
-        // );
-
         let context = self
             .ctx
             .get_global_string("Context")
@@ -153,10 +138,8 @@ impl VM {
             .getp::<Object>()?;
 
         let (elapsed, out) = measure(|| exports.call::<_, Ref>((instance, queue, context)));
-        let out = out?; //exports.call::<_, Ref>((instance, queue, context))?;
+        let out = out?;
         info!("page processed in {:?}", elapsed);
-
-        //self.ctx.data_mut()?.remove::<QueueKey>();
 
         Ok(out)
     }

@@ -166,7 +166,7 @@ fn consumer(
     loop {
         let timeout = after(wait);
 
-        let task = select!{
+        let task = select! {
             recv(receiver) -> ret => match ret {
                 Ok(task) => task,
                 Err(_) => break,
@@ -190,7 +190,10 @@ fn consumer(
             },
         };
 
-        results.send(result);
+        if results.send(result).is_err() {
+            info!("consumer#{} results channel closed", id);
+            return;
+        }
 
         info!("consumer#{} task done", id);
     }
@@ -247,8 +250,8 @@ impl Crawler {
             scope.spawn(move || {
                 let ctx = Context::new().unwrap();
 
-                let mut builder = duktape_cjs::RequireBuilder::new();
-                duktape_stdlib::init(&ctx, &mut builder, duktape_stdlib::Modules::all());
+                let mut builder = duktape_cjs::Builder::new();
+                duktape_stdlib::register(&ctx, &mut builder, duktape_stdlib::Modules::all());
                 duktape_cjs::register(&ctx, builder);
                 duktape_stdlib::init_runtime(&ctx);
 
