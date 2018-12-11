@@ -7,6 +7,17 @@ pub fn measure<T, F: FnOnce() -> T>(f: F) -> (Duration, T) {
     (now.duration_since(start), r)
 }
 
+#[macro_use]
+macro_rules! measure2 {
+    ($ex:expr) => {{
+        let start = Instant::now();
+        let ret = $ex();
+        let now = Instant::now();
+        debug!("run in {:?}", now);
+        ret
+    }};
+}
+
 use super::error::{ErrorKind, Result};
 use std::path::{Path, PathBuf};
 

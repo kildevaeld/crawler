@@ -19,13 +19,15 @@ extern crate crossbeam_channel;
 extern crate uuid;
 extern crate value;
 
+#[macro_use]
+pub mod utils;
 mod cheerio;
 mod crawler;
-mod error;
+pub mod error;
 mod manifest;
 mod queue;
 mod task;
-mod utils;
+
 mod vm;
 
 pub use self::crawler::*;

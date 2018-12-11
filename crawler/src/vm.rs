@@ -143,4 +143,49 @@ impl VM {
 
         Ok(out)
     }
+
+    pub fn run2<'a>(&'a self, task: &Task, html: &str) -> Result<Ref<'a>> {
+        let queue = self
+            .ctx
+            .get_global_string("Queue")
+            .construct(0)?
+            .getp::<Object>()?;
+
+        queue.set("parentTask", task);
+
+        let module = match task.work() {
+            Work::Path(p) => {
+                let path = utils::join(&task.root(), p)?;
+                let (elapsed, module) = measure(|| self.ctx.eval_main(&path));
+                let module = module?;
+                info!("script {:?} evaluated in {:?}", path, elapsed);
+                module
+            }
+        };
+
+        let exports = module.get::<_, Function>("exports")?;
+
+        let cheerio = self
+            .ctx
+            .get_global_string("require")
+            .getp::<Function>()?
+            .call::<_, Object>("cheerio")?;
+
+        let (elapsed, instance) = measure(|| cheerio.call::<_, _, Object>("load", html));
+        let instance = instance?;
+        info!("dom loaded in {:?}", elapsed);
+
+        let context = self
+            .ctx
+            .get_global_string("Context")
+            .push(task)?
+            .construct(1)?
+            .getp::<Object>()?;
+
+        let (elapsed, out) = measure(|| exports.call::<_, Ref>((instance, queue, context)));
+        let out = out?;
+        info!("page processed in {:?}", elapsed);
+
+        Ok(out)
+    }
 }

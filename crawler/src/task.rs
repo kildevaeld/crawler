@@ -148,6 +148,28 @@ impl ToDuktape for Task {
     }
 }
 
+impl ToDuktape for &Task {
+    fn to_context(self, ctx: &Context) -> DukResult<()> {
+        let o = ctx.create::<duktape::types::Object>()?;
+
+        let w = ctx.create::<duktape::types::Object>()?;
+        match &self.work {
+            Work::Path(p) => {
+                w.set("type", "path");
+                w.set("value", p);
+            }
+        };
+
+        o.set("url", self.url.as_str()).set("work", w);
+        o.set("id", self.id.to_hyphenated().to_string());
+        o.set("root", &self.root);
+
+        ctx.push(o)?;
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct ParseTask {
     pub(crate) id: Uuid,
