@@ -2,13 +2,15 @@ extern crate crawler;
 extern crate env_logger;
 #[macro_use]
 extern crate clap;
+extern crate spinners;
 
 use std::fs;
 use std::io;
 
-fn load_packages(crawler: &mut crawler::Crawler, path: &str) -> crawler::error::Result<()> {
+fn load_packages(crawler: &mut crawler::Crawler, path: &str) -> crawler::error::Result<u32> {
     let iter = fs::read_dir(path)?;
 
+    let mut count = 0;
     for path in iter {
         let path = path?;
 
@@ -22,9 +24,10 @@ fn load_packages(crawler: &mut crawler::Crawler, path: &str) -> crawler::error::
         };
 
         crawler.add(pack.task()?);
+        count += 1;
     }
 
-    Ok(())
+    Ok(count)
 }
 
 fn main() {
@@ -50,20 +53,25 @@ fn main() {
     cfg.workers(workers);
 
     let mut c = cfg.build();
+    print!("Scanning for packages ... ");
+    let count = load_packages(&mut c, matches.value_of("path").unwrap()).unwrap_or_else(|e| {
+        panic!("could not");
+        0
+    });
 
-    load_packages(&mut c, matches.value_of("path").unwrap())
-        .unwrap_or_else(|e| println!("could not {}", e));
-    // let iter = fs::read_dir(matches.value_of("path").unwrap()).unwrap();
+    println!("\rFound {} packages    ", count);
 
-    // for path in iter {
-    //     let path = path.unwrap();
-    //     if !path.path().is_dir() {
-    //         continue;
-    //     }
-    //     let pack = crawler::Package::load(path.path()).unwrap();
-    //     c.add(pack.task().unwrap());
-    // }
+    let (e, count) = if cfg!(debug_assertions) {
+        crawler::utils::measure(|| c.start())
+    } else {
+        let spin = spinners::Spinner::new(
+            spinners::Spinners::Dots12,
+            "Executing tasks ...".to_string(),
+        );
+        let (e, c) = crawler::utils::measure(|| c.start());
+        spin.stop();
+        (e, c)
+    };
 
-    let (e, count) = crawler::utils::measure(|| c.start());
-    println!("executed {} tasks in {:?}", count, e);
+    println!("\rExecuted {} tasks in {:?}", count, e);
 }

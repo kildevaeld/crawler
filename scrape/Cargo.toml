@@ -8,3 +8,4 @@ edition = "2018"
 clap = "^2.32.0"
 crawler = { path = "../crawler" }
 env_logger = "^0.5"
+spinners = "^1.0"
