@@ -1,5 +1,6 @@
+#[macro_use]
 extern crate duktape;
-extern crate duktape_cjs;
+extern crate duktape_modules;
 extern crate duktape_stdlib;
 extern crate serde;
 #[macro_use]

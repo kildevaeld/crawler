@@ -7,7 +7,7 @@ use super::utils::measure;
 use crossbeam_channel::Sender;
 use duktape::error::{ErrorKind, Result as DukResult};
 use duktape::prelude::*;
-use duktape_cjs::{self, require, CJSContext};
+use duktape_modules::{self, require, CJSContext};
 
 struct SenderKey;
 
@@ -23,7 +23,7 @@ impl VM {
     pub fn new(sender: Sender<Task>) -> Result<VM> {
         let ctx = Context::new()?;
 
-        let mut builder = duktape_cjs::Builder::new();
+        let mut builder = duktape_modules::Builder::new();
 
         builder.module("cheerio", |ctx: &Context| {
             let module: Object = ctx.get(-1)?;
@@ -31,7 +31,7 @@ impl VM {
             Ok(1)
         });
 
-        duktape_cjs::register(&ctx, builder)?;
+        duktape_modules::register(&ctx, builder)?;
 
         ctx.data_mut()?.insert::<SenderKey>(sender);
 

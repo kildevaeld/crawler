@@ -6,7 +6,7 @@ use super::vm::VM;
 use crossbeam;
 use duktape::prelude::*;
 use duktape::Context;
-use duktape_cjs::{self, CJSContext};
+use duktape_modules::{self, CJSContext};
 use duktape_stdlib;
 use reqwest::{self, Client};
 use std::sync::{Arc, Mutex};
@@ -213,9 +213,9 @@ impl Crawler {
             scope.spawn(move || {
                 let ctx = Context::new().unwrap();
 
-                let mut builder = duktape_cjs::Builder::new();
+                let mut builder = duktape_modules::Builder::new();
                 duktape_stdlib::register(&ctx, &mut builder, duktape_stdlib::Modules::all());
-                duktape_cjs::register(&ctx, builder);
+                duktape_modules::register(&ctx, builder);
                 duktape_stdlib::init_runtime(&ctx);
 
                 let module: Object = ctx.eval_main(results_path).unwrap();

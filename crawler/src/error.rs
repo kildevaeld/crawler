@@ -1,8 +1,8 @@
 use duktape::error as dukerr;
-use duktape_cjs::error as dukcjserr;
+use duktape_modules::error as dukcjserr;
 use reqwest::Error as ReqError;
-use url;
 use std::io::Error as IOError;
+use url;
 
 error_chain! {
     foreign_links {

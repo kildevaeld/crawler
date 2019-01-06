@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 duktape = { git = "https://github.com/kildevaeld/duktape-rs", features = ["value"] }
-duktape_cjs = { git = "https://github.com/kildevaeld/duktape-rs" }
+duktape_modules = { git = "https://github.com/kildevaeld/duktape-rs" }
 duktape_stdlib = { git = "https://github.com/kildevaeld/duktape-rs" }
 serde = "^1.0"
 serde_derive = "^1.0"
