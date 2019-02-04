@@ -59,7 +59,7 @@ fn main() {
         0
     });
 
-    println!("\rFound {} packages    ", count);
+    println!("\rFound {} packages       ", count);
 
     let (e, count) = if cfg!(debug_assertions) {
         crawler::utils::measure(|| c.start())

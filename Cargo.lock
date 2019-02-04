@@ -116,10 +116,6 @@ version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "chafe"
-version = "0.1.0"
-
-[[package]]
 name = "chrono"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -175,6 +171,7 @@ dependencies = [
  "crossbeam 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossbeam-channel 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "duktape 0.2.1 (git+https://github.com/kildevaeld/duktape-rs)",
+ "duktape_es2015 0.1.0 (git+https://github.com/kildevaeld/duktape-rs)",
  "duktape_modules 0.1.0 (git+https://github.com/kildevaeld/duktape-rs)",
  "duktape_stdlib 0.1.0 (git+https://github.com/kildevaeld/duktape-rs)",
  "error-chain 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -309,7 +306,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "duktape"
 version = "0.2.1"
-source = "git+https://github.com/kildevaeld/duktape-rs#63d7e4ad44dbab190af8353946bdd7be73fc32b6"
+source = "git+https://github.com/kildevaeld/duktape-rs#87a8aad5126f00487660c74462c94818e7db2476"
 dependencies = [
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "duktape_sys 0.2.0 (git+https://github.com/kildevaeld/duktape-rs)",
@@ -319,9 +316,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "duktape_es2015"
+version = "0.1.0"
+source = "git+https://github.com/kildevaeld/duktape-rs#87a8aad5126f00487660c74462c94818e7db2476"
+dependencies = [
+ "duktape 0.2.1 (git+https://github.com/kildevaeld/duktape-rs)",
+ "duktape_modules 0.1.0 (git+https://github.com/kildevaeld/duktape-rs)",
+]
+
+[[package]]
 name = "duktape_modules"
 version = "0.1.0"
-source = "git+https://github.com/kildevaeld/duktape-rs#63d7e4ad44dbab190af8353946bdd7be73fc32b6"
+source = "git+https://github.com/kildevaeld/duktape-rs#87a8aad5126f00487660c74462c94818e7db2476"
 dependencies = [
  "duktape 0.2.1 (git+https://github.com/kildevaeld/duktape-rs)",
  "error-chain 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -332,7 +338,7 @@ dependencies = [
 [[package]]
 name = "duktape_stdlib"
 version = "0.1.0"
-source = "git+https://github.com/kildevaeld/duktape-rs#63d7e4ad44dbab190af8353946bdd7be73fc32b6"
+source = "git+https://github.com/kildevaeld/duktape-rs#87a8aad5126f00487660c74462c94818e7db2476"
 dependencies = [
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "duktape 0.2.1 (git+https://github.com/kildevaeld/duktape-rs)",
@@ -342,7 +348,7 @@ dependencies = [
 [[package]]
 name = "duktape_sys"
 version = "0.2.0"
-source = "git+https://github.com/kildevaeld/duktape-rs#63d7e4ad44dbab190af8353946bdd7be73fc32b6"
+source = "git+https://github.com/kildevaeld/duktape-rs#87a8aad5126f00487660c74462c94818e7db2476"
 dependencies = [
  "cc 1.0.28 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -833,10 +839,6 @@ dependencies = [
  "siphasher 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicase 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
-
-[[package]]
-name = "pipe"
-version = "0.1.0"
 
 [[package]]
 name = "pkg-config"
@@ -1728,6 +1730,7 @@ dependencies = [
 "checksum crossbeam-utils 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "41ee4864f4797060e52044376f7d107429ce1fb43460021b126424b7180ee21a"
 "checksum dtoa 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "6d301140eb411af13d3115f9a562c85cc6b541ade9dfa314132244aaee7489dd"
 "checksum duktape 0.2.1 (git+https://github.com/kildevaeld/duktape-rs)" = "<none>"
+"checksum duktape_es2015 0.1.0 (git+https://github.com/kildevaeld/duktape-rs)" = "<none>"
 "checksum duktape_modules 0.1.0 (git+https://github.com/kildevaeld/duktape-rs)" = "<none>"
 "checksum duktape_stdlib 0.1.0 (git+https://github.com/kildevaeld/duktape-rs)" = "<none>"
 "checksum duktape_sys 0.2.0 (git+https://github.com/kildevaeld/duktape-rs)" = "<none>"

@@ -9,6 +9,7 @@ use duktape::error::{ErrorKind, Result as DukResult};
 use duktape::prelude::*;
 use duktape_modules::{self, require, CJSContext};
 
+
 struct SenderKey;
 
 impl duktape::Key for SenderKey {
@@ -30,6 +31,8 @@ impl VM {
             require::eval_module(ctx, CHEERIO_SOURCE, &module).unwrap();
             Ok(1)
         });
+
+        duktape_es2015::register(ctx, &mut builder);
 
         duktape_modules::register(&ctx, builder)?;
 

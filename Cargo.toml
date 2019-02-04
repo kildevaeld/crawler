@@ -3,6 +3,4 @@
 members = [
     "crawler",
     "scrape",
-    "chafe",
-    "pipe"
 ]
