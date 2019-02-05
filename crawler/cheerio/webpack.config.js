@@ -4,7 +4,9 @@ const Path = require('path');
 module.exports = {
     entry: {
         cheerio: "./cheerio.js",
-        html_entities: "./html-entities.js"
+        html_entities: "./html-entities.js",
+        striptags: "./striptags.js",
+        relaxed_json: './relaxed-json.js'
     },
     mode: 'none',
     output: {

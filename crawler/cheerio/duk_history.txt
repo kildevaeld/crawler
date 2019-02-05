@@ -1,0 +1,6 @@
+require('./dist/striptags');
+let m = require('striptags')
+var m = require('./dist/striptags')
+m
+m()
+JSON.stringify(m)

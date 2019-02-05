@@ -1,4 +1,4 @@
-use super::cheerio::{CHEERIO_SOURCE, HTML_ENTITIES_SOURCE};
+use super::cheerio::{CHEERIO_SOURCE, HTML_ENTITIES_SOURCE, RELAXED_JSON_SOURCE, STRIPTAGS_SOURCE};
 use super::error::Result;
 use super::queue::TaskQueue;
 use super::task::{ParseTask, Task, Work};
@@ -34,6 +34,16 @@ impl VM {
             .module("html-entities", |ctx: &Context| {
                 let module: Object = ctx.get(-1)?;
                 require::eval_module(ctx, HTML_ENTITIES_SOURCE, &module).unwrap();
+                Ok(1)
+            })
+            .module("striptags", |ctx: &Context| {
+                let module: Object = ctx.get(-1)?;
+                require::eval_module(ctx, STRIPTAGS_SOURCE, &module).unwrap();
+                Ok(1)
+            })
+            .module("relaxed-json", |ctx: &Context| {
+                let module: Object = ctx.get(-1)?;
+                require::eval_module(ctx, RELAXED_JSON_SOURCE, &module).unwrap();
                 Ok(1)
             });
 
