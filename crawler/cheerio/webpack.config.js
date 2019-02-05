@@ -2,11 +2,14 @@ const Path = require('path');
 
 
 module.exports = {
-    entry: "./index.js",
+    entry: {
+        cheerio: "./cheerio.js",
+        html_entities: "./html-entities.js"
+    },
     mode: 'none',
     output: {
         path: Path.join(__dirname, 'dist'),
-        filename: "cheerio.js",
+        filename: "[name].js",
         libraryTarget: 'commonjs'
     },
     module: {

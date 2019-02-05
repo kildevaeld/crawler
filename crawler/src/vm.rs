@@ -1,4 +1,4 @@
-use super::cheerio::CHEERIO_SOURCE;
+use super::cheerio::{CHEERIO_SOURCE, HTML_ENTITIES_SOURCE};
 use super::error::Result;
 use super::queue::TaskQueue;
 use super::task::{ParseTask, Task, Work};
@@ -8,7 +8,6 @@ use crossbeam_channel::Sender;
 use duktape::error::{ErrorKind, Result as DukResult};
 use duktape::prelude::*;
 use duktape_modules::{self, require, CJSContext};
-
 
 struct SenderKey;
 
@@ -26,13 +25,19 @@ impl VM {
 
         let mut builder = duktape_modules::Builder::new();
 
-        builder.module("cheerio", |ctx: &Context| {
-            let module: Object = ctx.get(-1)?;
-            require::eval_module(ctx, CHEERIO_SOURCE, &module).unwrap();
-            Ok(1)
-        });
+        builder
+            .module("cheerio", |ctx: &Context| {
+                let module: Object = ctx.get(-1)?;
+                require::eval_module(ctx, CHEERIO_SOURCE, &module).unwrap();
+                Ok(1)
+            })
+            .module("html-entities", |ctx: &Context| {
+                let module: Object = ctx.get(-1)?;
+                require::eval_module(ctx, HTML_ENTITIES_SOURCE, &module).unwrap();
+                Ok(1)
+            });
 
-        duktape_es2015::register(ctx, &mut builder);
+        duktape_es2015::register(&ctx, &mut builder);
 
         duktape_modules::register(&ctx, builder)?;
 

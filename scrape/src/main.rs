@@ -7,7 +7,11 @@ extern crate spinners;
 use std::fs;
 use std::io;
 
-fn load_packages(crawler: &mut crawler::Crawler, path: &str) -> crawler::error::Result<u32> {
+fn load_packages(
+    crawler: &mut crawler::Crawler,
+    path: &str,
+    only: &[&str],
+) -> crawler::error::Result<u32> {
     let iter = fs::read_dir(path)?;
 
     let mut count = 0;
@@ -23,8 +27,15 @@ fn load_packages(crawler: &mut crawler::Crawler, path: &str) -> crawler::error::
             None => continue,
         };
 
-        crawler.add(pack.task()?);
-        count += 1;
+        if !only.is_empty() && only.contains(&pack.manifest().name()) {
+            crawler.add(pack.task()?);
+            count += 1;
+        } else if only.is_empty() {
+            crawler.add(pack.task()?);
+            count += 1;
+        }
+
+        //crawler.add(pack.task()?);
     }
 
     Ok(count)
@@ -39,6 +50,7 @@ fn main() {
         (@arg path: * "path")
         (@arg workers: -w --workers <workers> "workers")
         (@arg script: -o --output <script> "script to send output")
+        (@arg only: --only[list] "")
     )
     .get_matches();
 
@@ -52,14 +64,21 @@ fn main() {
 
     cfg.workers(workers);
 
+    let mut only: Vec<&str> = Vec::new();
+
+    if matches.is_present("only") {
+        only = matches.values_of("only").unwrap().collect();
+    }
+
     let mut c = cfg.build();
     print!("Scanning for packages ... ");
-    let count = load_packages(&mut c, matches.value_of("path").unwrap()).unwrap_or_else(|e| {
-        panic!("could not");
-        0
-    });
+    let count =
+        load_packages(&mut c, matches.value_of("path").unwrap(), &only).unwrap_or_else(|e| {
+            panic!("could not");
+            0
+        });
 
-    println!("\rFound {} packages       ", count);
+    println!("\rFound {} packages              ", count);
 
     let (e, count) = if cfg!(debug_assertions) {
         crawler::utils::measure(|| c.start())
