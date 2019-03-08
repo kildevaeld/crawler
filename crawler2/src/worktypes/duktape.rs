@@ -31,8 +31,7 @@ impl WorkType for Duktape {
         info!(log, "using script"; "script" => script);
 
         Ok(into_box(station_fn(async move |mut package: Package| {
-            let body = await!(package.read_content())?;
-
+            
             Ok(vec![WorkOutput::Result(Ok(package))])
         })))
     }

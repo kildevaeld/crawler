@@ -176,7 +176,7 @@ impl Worker {
         input: Vec<WorkOutput<V>>,
         work: Arc<WorkBox<V>>,
     ) -> Vec<CrawlResult<V>> {
-        let (mut output, mut ret, mut thens) = Worker::split(input);
+        let (mut loutput, mut ret, mut thens) = Worker::split(input);
         loop {
             ret = await!(self._run(ret))
                 .into_iter()
@@ -185,7 +185,7 @@ impl Worker {
                         s.into_iter()
                             .filter_map(|m| match m {
                                 WorkOutput::Result(r) => {
-                                    output.push(r);
+                                    loutput.push(r);
                                     None
                                 }
                                 WorkOutput::Work(w) => Some(w),
@@ -197,7 +197,7 @@ impl Worker {
                             .collect::<Vec<_>>(),
                     ),
                     Err(e) => {
-                        output.push(Err(CrawlErrorKind::Conveyor(e.to_string()).into()));
+                        loutput.push(Err(CrawlErrorKind::Conveyor(e.to_string()).into()));
                         None
                     }
                 })
@@ -213,8 +213,9 @@ impl Worker {
 
         let ret = await!(self.run(ret));
         output.extend(ret);
+        loutput.extend(output);
 
-        output
+        loutput
     }
 
     pub async fn run_chain<V: 'static + Send + Sync>(
