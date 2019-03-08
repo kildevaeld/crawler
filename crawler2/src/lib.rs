@@ -15,10 +15,11 @@ extern crate lazy_static;
 #[macro_use]
 #[macro_export]
 pub mod macros;
-
 pub mod context;
 pub mod descriptions;
+pub mod environment;
 pub mod error;
+pub mod target;
 pub mod traits;
 pub mod utils;
 mod work;
@@ -27,6 +28,8 @@ pub mod worktypes;
 pub mod prelude {
     pub use super::context::*;
     pub use super::descriptions::*;
+    pub use super::environment::*;
+    pub use super::target::*;
     pub use super::traits::*;
     pub use super::worktypes;
 }
@@ -41,7 +44,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let desc = WorkTarget {
+        let desc = TargetDescription {
             name: "Loppen".to_string(),
             work: WorkTargetDescription {
                 input: Value::String("https://loppen.dk".to_string()),
@@ -87,7 +90,7 @@ mod tests {
         let s = serde_yaml::to_string(&desc).unwrap();
         println!("{}", s);
 
-        let desc: WorkTarget = serde_yaml::from_str(&s).unwrap();
+        let desc: TargetDescription = serde_yaml::from_str(&s).unwrap();
         println!("{:?}", desc);
     }
 }

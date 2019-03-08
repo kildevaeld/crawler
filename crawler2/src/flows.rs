@@ -1,12 +1,12 @@
 use super::descriptions::*;
 use super::context::Args;
 pub struct Flows {
-    target: Arc<WorkTarget>
+    target: Arc<TargetDescription>
 }
 
 
 impl Flows {
-    pub fn new(target: Arc<WorkTarget>) -> Flows {
+    pub fn new(target: Arc<TargetDescription>) -> Flows {
         Flows{target}
     }
 

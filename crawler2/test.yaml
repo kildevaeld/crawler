@@ -3,14 +3,16 @@ name: Loppen
 work: 
 	input: https://loppen.dk
   steps:
-  - type: Flow
-  	flow_name: Crawl
-    arguments: 
-    	script: file://./index.js
-  - type: ToJson
   - type: ConcatJson
+    name: ${targetName}.json
+    steps: 
+    - type: Flow
+      flow_name: Crawl
+      arguments: 
+        script: file://./index.js
+    - type: ToJson
   - type: FileWrite
-  	file: $output
+  	file: ${output}/${packageName}
 
 flows:
 	- name: Crawl

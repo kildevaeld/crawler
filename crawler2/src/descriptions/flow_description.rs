@@ -1,12 +1,11 @@
-use super::super::context::{Args, Context, RootContext};
+use super::super::context::{Args, Context};
 use super::super::error::CrawlResult;
-use super::super::utils::{interpolate, is_interpolated, station_fn_ctx2};
+use super::super::utils::station_fn_ctx2;
 use super::super::utils::{WorkArcWrapper, WorkBoxWrapper};
 use super::super::work::{Work, WorkBox, WorkOutput, Worker};
 use conveyor::{into_box, Chain};
 use conveyor_work::package::Package;
 use slog::FnValue;
-use slog::Logger;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -19,7 +18,7 @@ pub struct FlowDescription {
 }
 
 impl FlowDescription {
-    pub fn request_station(&self, args: &Args, ctx: &mut Context) -> CrawlResult<WorkBox<Package>> {
+    pub fn build(&self, args: &Args, ctx: &mut Context) -> CrawlResult<WorkBox<Package>> {
         let mut flow_ctx = ctx.child(&format!("Flow({})", self.name), Some(args.clone()));
 
         let start = Instant::now();
@@ -62,33 +61,15 @@ impl FlowDescription {
 
         info!(flow_ctx.log(), "flow finished";  "time" => FnValue(move |_| format!("{:?}",start.elapsed())));
 
-        Ok(work)
+        Ok(into_box(station_fn_ctx2(
+            async move |pack: Package, ctx: Arc<(Context, WorkBox<Package>)>| {
+                info!(ctx.0.log(), "flow started");
+                let now = Instant::now();
+                let ret = await!(ctx.1.execute(pack));
+                info!(ctx.0.log(), "flow executed"; "time" => FnValue(move |_| format!("{:?}",now.elapsed())));
+                ret
+            },
+            Arc::new((flow_ctx, work)),
+        )))
     }
 }
-
-// pub struct FlowContext<'a> {
-//     parent: &'a mut Context,
-//     args: &'a Args,
-//     logger: Logger,
-// }
-
-// impl<'a> Context for FlowContext<'a> {
-//     fn args(&self) -> &Args {
-//         self.args
-//     }
-
-//     fn parent(&self) -> Option<&Context> {
-//         Some(self.parent)
-//     }
-//     fn interpolate(&self, name: &str) -> Option<String> {
-//         self.parent.interpolate(&interpolate(name, self.args))
-//     }
-
-//     fn root(&mut self) -> &mut RootContext {
-//         self.parent.root()
-//     }
-
-//     fn log(&self) -> &Logger {
-//         &self.logger
-//     }
-// }

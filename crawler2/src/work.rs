@@ -4,7 +4,6 @@ use conveyor::futures::prelude::*;
 use conveyor::Chain;
 use conveyor::ConcurrentStream;
 use conveyor::{into_box, Result, Station};
-use conveyor_work::prelude::*;
 use std::pin::Pin;
 use std::sync::Arc;
 
