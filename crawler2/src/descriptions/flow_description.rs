@@ -1,12 +1,14 @@
-use super::super::context::{Args, ChildContext, Context, RootContext, ToChildContext};
+use super::super::context::{Args, Context, RootContext};
 use super::super::error::CrawlResult;
 use super::super::utils::{interpolate, is_interpolated, station_fn_ctx2};
 use super::super::utils::{WorkArcWrapper, WorkBoxWrapper};
 use super::super::work::{Work, WorkBox, WorkOutput, Worker};
 use conveyor::{into_box, Chain};
 use conveyor_work::package::Package;
+use slog::FnValue;
 use slog::Logger;
 use std::sync::Arc;
+use std::time::Instant;
 
 use super::work_description::*;
 
@@ -18,13 +20,10 @@ pub struct FlowDescription {
 
 impl FlowDescription {
     pub fn request_station(&self, args: &Args, ctx: &mut Context) -> CrawlResult<WorkBox<Package>> {
-        let logger = ctx.log().new(o!("category" => "flow-context"));
+        let mut flow_ctx = ctx.child(&format!("Flow({})", self.name), Some(args.clone()));
 
-        let mut flow_ctx = FlowContext {
-            parent: ctx,
-            args,
-            logger,
-        };
+        let start = Instant::now();
+        info!(flow_ctx.log(),"building flow"; "steps" => self.work.len(), "args" => serde_json::to_string(args).unwrap());
 
         let mut work = self.work[0].request_station(&mut flow_ctx).unwrap();
         for w in self.work.iter().skip(1) {
@@ -60,33 +59,36 @@ impl FlowDescription {
                 Arc::new(ww),
             )));
         }
+
+        info!(flow_ctx.log(), "flow finished";  "time" => FnValue(move |_| format!("{:?}",start.elapsed())));
+
         Ok(work)
     }
 }
 
-pub struct FlowContext<'a> {
-    parent: &'a mut Context,
-    args: &'a Args,
-    logger: Logger,
-}
+// pub struct FlowContext<'a> {
+//     parent: &'a mut Context,
+//     args: &'a Args,
+//     logger: Logger,
+// }
 
-impl<'a> Context for FlowContext<'a> {
-    fn args(&self) -> &Args {
-        self.args
-    }
+// impl<'a> Context for FlowContext<'a> {
+//     fn args(&self) -> &Args {
+//         self.args
+//     }
 
-    fn parent(&self) -> Option<&Context> {
-        Some(self.parent)
-    }
-    fn interpolate(&self, name: &str) -> Option<String> {
-        self.parent.interpolate(&interpolate(name, self.args))
-    }
+//     fn parent(&self) -> Option<&Context> {
+//         Some(self.parent)
+//     }
+//     fn interpolate(&self, name: &str) -> Option<String> {
+//         self.parent.interpolate(&interpolate(name, self.args))
+//     }
 
-    fn root(&mut self) -> &mut RootContext {
-        self.parent.root()
-    }
+//     fn root(&mut self) -> &mut RootContext {
+//         self.parent.root()
+//     }
 
-    fn log(&self) -> &Logger {
-        &self.logger
-    }
-}
+//     fn log(&self) -> &Logger {
+//         &self.logger
+//     }
+// }

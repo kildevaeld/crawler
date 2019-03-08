@@ -18,7 +18,7 @@ pub struct Flow {
 #[typetag::serde]
 impl WorkType for Flow {
     fn request_station(&self, ctx: &mut Context) -> CrawlResult<WorkBox<Package>> {
-        info!(ctx.log(),"request flow type station"; "flow_name" => &self.flow_name);
+        info!(ctx.log().new(o!("worktype" => "flow")),"request flow type station"; "flow_name" => &self.flow_name);
         if let Some(args) = &self.arguments {
             ctx.root().flow(&self.flow_name, args.clone())
         } else {

@@ -8,9 +8,9 @@ use super::work_description::*;
 use conveyor::{into_box, Chain};
 use conveyor_work::package::Package;
 use serde_json::Value;
-use slog::Logger;
+use slog::{FnValue, Logger};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WorkTarget {
@@ -42,17 +42,12 @@ impl WorkTargetDescription {
         if self.steps.is_empty() {
             return Ok(vec![]);
         }
-        let name = parent.target().name.to_string();
 
         let start = Instant::now();
 
-        let logger = parent.log().new(o!("category" => "target-context"));
-        let mut ctx = WorkTargetDescriptionContext {
-            parent,
-            logger: logger,
-        };
+        let mut ctx = parent.child(&format!("Target({})", parent.target().name), None);
 
-        info!(ctx.log(),"starting target"; "steps" => self.steps.len(), "name" => &name);
+        info!(ctx.log(),"starting target"; "steps" => self.steps.len());
 
         let mut work = self.steps[0].request_station(&mut ctx).unwrap();
         if self.steps.len() > 1 {
@@ -71,41 +66,13 @@ impl WorkTargetDescription {
 
         let worker = Worker::new();
         let ret = await!(worker.run(vec![Work::new(
-            Package::new(&name, self.input.clone()),
+            Package::new(&parent.target().name, self.input.clone()),
             WorkBoxWrapper::new(work),
         )]));
 
-        info!(ctx.log(), "target finished"; "name" => &name, "time" => start.elapsed().as_millis());
+        info!(ctx.log(), "target finished"; "time" => FnValue(move |_| format!("{:?}",start.elapsed())));
 
         Ok(ret)
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct WorkTargetDescriptionContext {
-    parent: RootContext,
-    logger: Logger,
-}
-
-impl Context for WorkTargetDescriptionContext {
-    fn args(&self) -> &Args {
-        self.parent.args()
-    }
-
-    fn parent(&self) -> Option<&Context> {
-        Some(&self.parent)
-    }
-
-    fn interpolate(&self, name: &str) -> Option<String> {
-        self.parent.interpolate(name)
-    }
-
-    fn root(&mut self) -> &mut RootContext {
-        &mut self.parent
-    }
-
-    fn log(&self) -> &Logger {
-        &self.logger
     }
 }
 
@@ -122,28 +89,6 @@ mod tests {
     use serde_json::Value;
     use slog::*;
     use tokio;
-
-    pub struct MockContext;
-
-    impl Context for MockContext {
-        fn parent(&self) -> Option<&Context> {
-            None
-        }
-        fn interpolate(&self, name: &str) -> Option<String> {
-            None
-        }
-        fn log(&self) -> &Logger {
-            unimplemented!("not ");
-        }
-
-        fn root(&mut self) -> &mut RootContext {
-            unimplemented!("no root")
-        }
-
-        fn args(&self) -> &Args {
-            unimplemented!("not ");
-        }
-    }
 
     #[test]
     fn test_target() {

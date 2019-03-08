@@ -14,6 +14,15 @@ pub enum WorkOutput<V: 'static + Send> {
     Then(V),
 }
 
+impl<V: 'static + Send> WorkOutput<V> {
+    pub fn is_then(&self) -> bool {
+        match self {
+            WorkOutput::Then(_) => true,
+            _ => false,
+        }
+    }
+}
+
 pub type WorkBox<V> = Box<
     Station<
             Input = V,
@@ -202,7 +211,7 @@ impl Worker {
         }
 
         let (mut output, ret) = Worker::split2(thens.into_iter().map(|m| Ok(m)).collect(), work);
-        println!("len {} {}", output.len(), ret.len());
+
         let ret = await!(self.run(ret));
         output.extend(ret);
 

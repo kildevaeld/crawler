@@ -5,10 +5,25 @@ use super::super::utils::*;
 use super::super::work::{WorkBox, WorkOutput};
 use conveyor::ConveyorError;
 use conveyor::*;
-use conveyor_http::{Http as WHttp, HttpResponseReader, Url};
+use conveyor_http::{Http as WHttp, HttpResponse, HttpResponseReader, Url};
 use conveyor_work::http::{HttpOptions, Method};
 use conveyor_work::prelude::*;
+use slog::Logger;
+use std::pin::Pin;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct HttpResponseStream;
+
+impl Station for HttpResponseStream {
+    type Input = HttpResponse;
+    type Output =
+        Pin<Box<conveyor::futures::stream::Stream<Item = Result<Vec<u8>>> + Send + 'static>>;
+    type Future = conveyor::futures::future::Ready<Result<Self::Output>>;
+    fn execute(&self, mut input: Self::Input) -> Self::Future {
+        conveyor::futures::future::ready(Ok(Box::pin(input.stream())))
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Http {
@@ -21,23 +36,30 @@ impl WorkType for Http {
     fn request_station(&self, ctx: &mut Context) -> CrawlResult<WorkBox<Package>> {
         let method = self.method.as_ref().unwrap_or(&Method::GET).clone();
 
-        let http = WHttp::new().pipe(HttpResponseReader);
+        let http = WHttp::new().pipe(HttpResponseStream);
+
+        let log = ctx
+            .log()
+            .new(o!("worktype" => "http", "method" => format!("{:?}", method)));
+
+        info!(log, "request http station");
 
         Ok(into_box(station_fn_ctx2(
             async move |mut package: Package,
-                        ctx: Arc<(Conveyor<WHttp, HttpResponseReader>, Method)>| {
+                        ctx: Arc<(Conveyor<WHttp, HttpResponseStream>, Method, Logger)>| {
                 let body = await!(package.read_content())?;
 
                 let json: String =
                     serde_json::from_slice(&body).map_err(|e| ConveyorError::new(e))?;
 
                 let url = Url::parse(&json).map_err(|e| ConveyorError::new(e))?;
+                info!(ctx.2, "making request"; "url" => url.as_str());
                 let options = HttpOptions::new(ctx.1.clone(), url);
                 let body = await!(ctx.0.execute(options.to_request()))?;
-
+                info!(ctx.2, "request done"; "url" => &json);
                 Ok(vec![WorkOutput::Result(Ok(package.set_value(body)))])
             },
-            Arc::new((http, method)),
+            Arc::new((http, method, log)),
         )))
     }
 
@@ -58,62 +80,40 @@ mod tests {
     use serde_json::Value;
     use slog::Logger;
     use tokio;
-    pub struct MockContext;
-
-    impl Context for MockContext {
-        fn parent(&self) -> Option<&Context> {
-            None
-        }
-        fn interpolate(&self, name: &str) -> Option<String> {
-            None
-        }
-
-        fn log(&self) -> &Logger {
-            unimplemented!("not ");
-        }
-
-        fn root(&mut self) -> &mut RootContext {
-            unimplemented!("not ");
-        }
-
-        fn args(&self) -> &Args {
-            unimplemented!("not ");
-        }
-    }
 
     #[test]
     fn test_http() {
         tokio::run_async(
             async {
-                let http = Http {
-                    method: Some(Method::GET),
-                };
-                let mut ctx = MockContext;
-                let station = http.request_station(&mut ctx).unwrap();
+                // let http = Http {
+                //     method: Some(Method::GET),
+                // };
+                // let mut ctx = MockContext;
+                // let station = http.request_station(&mut ctx).unwrap();
 
-                let worker = work::Worker::new();
+                // let worker = work::Worker::new();
 
-                // worker.run(vec![Work::new(
-                //     Package::new("test", "https://distrowatch.com/"),
+                // // worker.run(vec![Work::new(
+                // //     Package::new("test", "https://distrowatch.com/"),
+                // //     WorkBoxWrapper::new(station),
+                // // )]);
+
+                // // let pack =
+                // //     await!(station.execute(Package::new("test", "https://distrowatch.com/")))
+                // //         .unwrap();
+
+                // let pack = await!(worker.run(vec![work::Work::new(
+                //     Package::new("test", Value::String("https://distrowatch.com/".to_owned())),
                 //     WorkBoxWrapper::new(station),
-                // )]);
+                // )]));
 
-                // let pack =
-                //     await!(station.execute(Package::new("test", "https://distrowatch.com/")))
-                //         .unwrap();
-
-                let pack = await!(worker.run(vec![work::Work::new(
-                    Package::new("test", Value::String("https://distrowatch.com/".to_owned())),
-                    WorkBoxWrapper::new(station),
-                )]));
-
-                for p in pack {
-                    if let Ok(ret) = p {
-                        println!("name {}", ret.name());
-                    } else {
-                        println!("Err {:?}", p.err());
-                    }
-                }
+                // for p in pack {
+                //     if let Ok(ret) = p {
+                //         println!("name {}", ret.name());
+                //     } else {
+                //         println!("Err {:?}", p.err());
+                //     }
+                // }
             },
         );
     }

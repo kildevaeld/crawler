@@ -23,19 +23,26 @@ impl WorkDescription {
         let ret = (
             self.work.request_station(ctx)?,
             match &self.then {
-                Some(m) => Some(Arc::new(m.request_station(ctx)?)),
+                Some(s) => Some(s.clone()),
                 None => None,
             },
+            ctx.clone(),
         );
 
         Ok(into_box(station_fn_ctx2(
             async move |pack: Package,
-                        ctx: Arc<(WorkBox<Package>, Option<Arc<WorkBox<Package>>>)>| {
+                        ctx: Arc<(WorkBox<Package>, Option<Box<WorkType>>, Context)>| {
                 let mut ret = await!(ctx.0.execute(pack))?;
-                if let Some(then) = &ctx.1 {
-                    let worker = Worker::new();
-                    let output = await!(worker.run_and(ret, then.clone()));
-                    ret = output.into_iter().map(|m| WorkOutput::Result(m)).collect();
+
+                if ret.iter().find(|m| m.is_then()).is_some() {
+                    if let Some(then) = &ctx.1 {
+                        let mut c = ctx.2.clone();
+                        let worker = Worker::new();
+                        let output =
+                            await!(worker
+                                .run_and(ret, Arc::new(then.request_station(&mut c).unwrap())));
+                        ret = output.into_iter().map(|m| WorkOutput::Result(m)).collect();
+                    }
                 }
 
                 Ok(ret)

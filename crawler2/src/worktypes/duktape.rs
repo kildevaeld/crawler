@@ -22,15 +22,17 @@ impl fmt::Debug for Duktape {
 #[typetag::serde]
 impl WorkType for Duktape {
     fn request_station(&self, ctx: &mut Context) -> CrawlResult<WorkBox<Package>> {
-        // info!(ctx.log(), "request duktape station");
+        let log = ctx.log().new(o!("worktype" => "duktape"));
 
-        // let log = ctx.log().new(o!("station" => "Duktape"));
+        info!(log, "request duktape station");
 
-        // let script = ctx.interpolate(self.script.as_str()).unwrap();
+        let script = ctx.interpolate(self.script.as_str()).unwrap();
 
-        // info!(log, "using script"; "script" => script);
+        info!(log, "using script"; "script" => script);
 
-        Ok(into_box(station_fn(async move |package: Package| {
+        Ok(into_box(station_fn(async move |mut package: Package| {
+            let body = await!(package.read_content())?;
+
             Ok(vec![WorkOutput::Result(Ok(package))])
         })))
     }
