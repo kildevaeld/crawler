@@ -1,0 +1,26 @@
+[package]
+name = "crawler2"
+version = "0.1.0"
+authors = ["Rasmus Kildevæld <rasmuskildevaeld@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = "^1.0"
+serde_derive = "^1.0"
+typetag = "^0.1"
+serde_yaml = "^0.8"
+conveyor-work = { git = "https://github.com/kildevaeld/conveyor-rs", features = ["http", "fs"] }
+conveyor = { git = "https://github.com/kildevaeld/conveyor-rs" }
+conveyor-http = { git = "https://github.com/kildevaeld/conveyor-rs" }
+tokio = { version = "^0.1", features =["async-await-preview"] }
+serde_json = "^1.0"
+slog = "^2.4"
+regex = "^1.1"
+lazy_static = "^1.3"
+
+[dev-dependencies]
+slog-term = "^2"
+slog-async = "^2"
+[[example]]
+name = "main"
+path = "example/main.rs"

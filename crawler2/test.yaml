@@ -1,0 +1,28 @@
+---
+name: Loppen
+work: 
+	input: https://loppen.dk
+  steps:
+  - type: Flow
+  	flow_name: Crawl
+    arguments: 
+    	script: file://./index.js
+  - type: ToJson
+  - type: ConcatJson
+  - type: FileWrite
+  	file: $output
+
+flows:
+	- name: Crawl
+  	work:
+    	- name: Download
+        type: Http
+      	method: GET
+      - name: Parse
+        type: Duktape
+      	script: $script
+        then:
+        	type: Flow
+          name: Crawl
+          arguments:
+          	script: file://./concert.js

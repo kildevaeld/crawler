@@ -2,5 +2,6 @@
 
 members = [
     "crawler",
+    "crawler2",
     "scrape",
 ]
