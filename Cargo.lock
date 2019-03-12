@@ -265,6 +265,7 @@ dependencies = [
  "conveyor-http 0.1.0 (git+https://github.com/kildevaeld/conveyor-rs)",
  "conveyor-work 0.1.0 (git+https://github.com/kildevaeld/conveyor-rs)",
  "lazy_static 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pathutils 0.1.0 (git+https://github.com/kildevaeld/pathutils-rs.git)",
  "regex 1.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.89 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.89 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -277,6 +278,7 @@ dependencies = [
  "tokio 0.1.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "typetag 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vfs 0.1.0 (git+https://github.com/kildevaeld/vfs-rs)",
 ]
 
 [[package]]

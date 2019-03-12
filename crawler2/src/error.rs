@@ -11,6 +11,7 @@ pub enum CrawlErrorKind {
     Conveyor(String),
     Error(Box<dyn Error + Send + Sync>),
     NotFound(String),
+    Io(std::io::Error),
 }
 
 #[derive(Debug)]
@@ -47,5 +48,11 @@ impl From<CrawlErrorKind> for CrawlError {
 impl From<ConveyorError> for CrawlError {
     fn from(error: ConveyorError) -> CrawlError {
         CrawlError::new(CrawlErrorKind::Conveyor(error.to_string()))
+    }
+}
+
+impl From<std::io::Error> for CrawlError {
+    fn from(error: std::io::Error) -> CrawlError {
+        CrawlError::new(CrawlErrorKind::Io(error))
     }
 }

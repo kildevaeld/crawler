@@ -39,12 +39,14 @@ impl WorkType for Concat {
                 //     return Err(CrawlErrorKind::Unknown.into());
                 // }
 
+                let name = ctx.0.interpolate(&ctx.2).unwrap();
+
                 let s = await!(ConcatStream::new(
                     stream::iter(ret)
                         .then(async move |mut m| await!(m.as_mut().unwrap().read_content()))
                 ))?;
 
-                Ok(vec![WorkOutput::Result(Ok(Package::new(&ctx.2, s)))])
+                Ok(vec![WorkOutput::Result(Ok(Package::new(&name, s)))])
             },
             Arc::new((ctx, Arc::new(work), self.name.clone())),
         )))

@@ -18,6 +18,8 @@ slog = "^2.4"
 regex = "^1.1"
 uuid = { version = "^0.7", features = ["v4"] }
 lazy_static = "^1.3"
+pathutils = { git = "https://github.com/kildevaeld/pathutils-rs" }
+vfs = { git = "https://github.com/kildevaeld/vfs-rs" }
 
 [dev-dependencies]
 slog-term = "^2"

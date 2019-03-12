@@ -56,13 +56,24 @@ impl Context {
     }
 
     pub fn interpolate(&self, name: &str) -> Option<String> {
-        debug!(self.log(), "interpolate"; "text" => name, "args" => FnValue(|_| serde_json::to_string(self.args()).unwrap()));
+        let args = self.all_args();
+        info!(self.log(), "interpolate"; "text" => name, "args" => FnValue(|_| serde_json::to_string(&args).unwrap()));
 
-        let temp = interpolate(name, self.args());
-        match &self.parent {
-            ParentOrRoot::Parent(p) => p.interpolate(&temp),
-            ParentOrRoot::Root(r) => r.interpolate(&temp),
+        // let temp = interpolate(name, self.args());
+        // match &self.parent {
+        //     ParentOrRoot::Parent(p) => p.interpolate(&temp),
+        //     ParentOrRoot::Root(r) => r.interpolate(&temp),
+        // }
+        Some(interpolate(name, &args))
+    }
+
+    pub fn interpolate_with(&self, text: &str, args: &Args) -> String {
+        let mut oargs = self.all_args();
+        for o in args.iter() {
+            oargs.insert(o.0.clone(), o.1.clone());
         }
+        info!(self.log(), "interpolate"; "text" => text, "args" => FnValue(|_| serde_json::to_string(&oargs).unwrap()));
+        interpolate(text, &oargs)
     }
 
     pub fn root(&mut self) -> &mut RootContext {

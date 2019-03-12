@@ -4,6 +4,7 @@ use super::environment::Environment;
 use super::error::CrawlResult;
 use super::work::*;
 use conveyor_work::package::Package;
+use pathutils;
 use slog::Logger;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -20,12 +21,18 @@ impl Target {
         path: P,
         env: Arc<Environment>,
         description: TargetDescription,
-    ) -> Target {
-        Target {
+    ) -> CrawlResult<Target> {
+        let path = if !path.as_ref().is_absolute() {
+            std::fs::canonicalize(path)?
+        } else {
+            path.as_ref().to_path_buf()
+        };
+
+        Ok(Target {
             e: env,
-            p: path.as_ref().to_path_buf(),
+            p: path,
             d: Arc::new(description),
-        }
+        })
     }
 
     pub fn env(&self) -> &Environment {

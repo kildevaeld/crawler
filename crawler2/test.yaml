@@ -11,8 +11,8 @@ work:
       arguments: 
         script: file://./index.js
     - type: ToJson
-  - type: FileWrite
-  	file: ${output}/${packageName}
+  - type: WriteDirectory
+  	path: ${output}
 
 flows:
 	- name: Crawl
