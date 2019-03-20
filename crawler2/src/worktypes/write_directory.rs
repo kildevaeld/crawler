@@ -10,6 +10,7 @@ use pathutils;
 use std::fmt;
 use std::sync::Arc;
 use vfs::{VPath, WritePath, VFS};
+use std::io::Write;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct WriteDirectory {
@@ -46,13 +47,19 @@ impl WorkType for WriteDirectory {
 
         Ok(into_box(WorkStation::new(
             1,
-            |package: Package, ctx: &mut (vfs::physical::PhysicalFS, Context)| {
+            |mut package: Package, ctx: &mut (vfs::physical::PhysicalFS, Context)| {
                 let path = ctx.0.path(package.name());
                 if path.exists() {
                     return Ok(vec![WorkOutput::Result(Ok(package))]);
                 }
 
                 info!(ctx.1.log(), "writing path"; "path" => format!("{:?}", path));
+
+                let buf = conveyor::futures::executor::block_on(package.read_content())?;
+
+                let mut file = path.create().unwrap();
+                file.write(&buf);
+                file.flush();
 
                 Ok(vec![WorkOutput::Result(Ok(package))])
             },

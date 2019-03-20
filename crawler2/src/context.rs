@@ -108,7 +108,7 @@ impl Context {
 
     pub fn all_args(&self) -> Args {
         let mut args = match &self.parent {
-            ParentOrRoot::Root(r) => r.args().clone(),
+            ParentOrRoot::Root(r) => r.all_args(),
             ParentOrRoot::Parent(p) => p.all_args(),
         };
 
@@ -180,6 +180,14 @@ impl RootContext {
 
     pub fn args(&self) -> &Args {
         &self.inner.args
+    }
+
+    pub fn all_args(&self) -> Args {
+        let mut args = self.target().env().vars().clone();
+        for e in &self.inner.args {
+                args.insert(e.0.clone(), e.1.clone());
+            }
+        args
     }
 
     pub fn interpolate(&self, name: &str) -> Option<String> {

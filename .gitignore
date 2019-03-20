@@ -2,3 +2,4 @@ target/
 .DS_Store
 example/
 output.json
+test_output/

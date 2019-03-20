@@ -32,6 +32,7 @@ pub mod prelude {
     pub use super::target::*;
     pub use super::traits::*;
     pub use super::worktypes;
+    pub use serde_json::Value;
 }
 
 #[cfg(test)]

@@ -47,18 +47,32 @@ impl Target {
         &self.d
     }
 
-    pub fn build(&self, args: Args) -> CrawlResult<TargetRunner> {
+    // pub fn build(self, args: Args) -> CrawlResult<TargetRunner> {
+    //     let mut ctx = Context::new(
+    //         ParentOrRoot::Root(RootContext::new(self, args)),
+    //         None,
+    //         None,
+    //     );
+    //     self.build_with(&mut ctx)
+    // }
+
+    // pub fn build_with(self, ctx: &mut Context) -> CrawlResult<TargetRunner> {
+    //     let work = self.d.work.build(ctx)?;
+    //     Ok(TargetRunner { work: work })
+    // }
+    pub fn build(self, args: Args) -> CrawlResult<TargetRunner> {
+        
+        let desc = self.d.clone();
+        
         let mut ctx = Context::new(
-            ParentOrRoot::Root(RootContext::new(self.clone(), args)),
+            ParentOrRoot::Root(RootContext::new(self, args)),
             None,
             None,
         );
-        self.build_with(&mut ctx)
-    }
 
-    pub fn build_with(&self, ctx: &mut Context) -> CrawlResult<TargetRunner> {
-        let work = self.d.work.build(ctx)?;
-        Ok(TargetRunner { work: work })
+        Ok(TargetRunner{
+            work: desc.work.build(&mut ctx)?
+        })
     }
 }
 

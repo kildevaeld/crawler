@@ -47,6 +47,10 @@ impl Environment {
         self.cwd.as_path()
     }
 
+    pub fn vars(&self) -> &Args {
+        &self.vars
+    }
+
     pub fn log(&self) -> &Logger {
         &self.logger
     }
