@@ -20,6 +20,8 @@ uuid = { version = "^0.7", features = ["v4"] }
 lazy_static = "^1.3"
 pathutils = { git = "https://github.com/kildevaeld/pathutils-rs" }
 vfs = { git = "https://github.com/kildevaeld/vfs-rs" }
+duktape2 = { git = "https://github.com/kildevaeld/duktape-rs", branch = "v2" }
+derive_builder = "~0.7"
 
 [dev-dependencies]
 slog-term = "^2"
@@ -29,3 +31,7 @@ slog-json = "^2"
 [[example]]
 name = "main"
 path = "example/main.rs"
+
+[[example]]
+name = "engine"
+path = "example/engine.rs"

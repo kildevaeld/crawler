@@ -13,6 +13,9 @@ extern crate slog;
 extern crate lazy_static;
 
 #[macro_use]
+extern crate derive_builder;
+
+#[macro_use]
 #[macro_export]
 pub mod macros;
 pub mod context;
@@ -24,6 +27,7 @@ pub mod traits;
 pub mod utils;
 mod work;
 pub mod worktypes;
+pub mod repository;
 
 pub mod prelude {
     pub use super::context::*;
@@ -33,6 +37,7 @@ pub mod prelude {
     pub use super::traits::*;
     pub use super::worktypes;
     pub use serde_json::Value;
+    pub use super::repository::*;
 }
 
 #[cfg(test)]
@@ -42,7 +47,7 @@ mod tests {
     use conveyor_work::http::Method;
     use serde_json::Value;
     use serde_yaml;
-
+    
     #[test]
     fn it_works() {
         let desc = TargetDescription {

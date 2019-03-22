@@ -1,0 +1,26 @@
+---
+name: Loppen
+work:
+  input: "${input}"
+  steps:
+  - type: Concat
+    name: "${targetName}.json"
+    steps:
+    - type: Flow
+      flow_name: Crawl
+      arguments:
+        script: ./index.js
+  - type: WriteDirectory
+    path: "${output}"
+flows:
+- name: Crawl
+  work:
+  - type: Http
+    method: GET
+  - type: Duktape
+    script: "${script}"
+    then:
+      type: Flow
+      flow_name: Crawl
+      arguments:
+        script: ./concert.js

@@ -1,4 +1,4 @@
-use super::error::{CrawlErrorKind, CrawlResult};
+use super::error::{CrawlErrorKind, CrawlResult, CrawlError};
 use super::target::Target;
 use super::utils::interpolate;
 use super::work::WorkBox;
@@ -164,6 +164,11 @@ impl RootContext {
 
     pub fn target(&self) -> &Target {
         &self.inner.target
+    }
+
+    pub fn resolve_path<S: AsRef<str>>(&self, path: S) -> CrawlResult<String> {
+        let p = self.inner.target.path().to_str().unwrap();
+        pathutils::resolve(p, path).map_err(|e| CrawlError::new(CrawlErrorKind::Error(Box::new(e))))
     }
 
     pub fn flow(&mut self, name: &str, args: Args) -> CrawlResult<WorkBox<Package>> {

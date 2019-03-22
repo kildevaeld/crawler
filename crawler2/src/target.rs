@@ -1,13 +1,15 @@
 use super::context::*;
 use super::descriptions::*;
 use super::environment::Environment;
-use super::error::CrawlResult;
+use super::error::{CrawlResult, CrawlErrorKind, CrawlError};
 use super::work::*;
 use conveyor_work::package::Package;
 use pathutils;
 use slog::Logger;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use serde_json;
+use std::fs;
 
 #[derive(Clone, Debug)]
 pub struct Target {
@@ -35,6 +37,32 @@ impl Target {
         })
     }
 
+    pub fn from_file<P: AsRef<Path>>(path: P, env: Arc<Environment>) -> CrawlResult<Target> {
+
+        if !path.as_ref().exists() || path.as_ref().is_dir() {
+            return Err(CrawlErrorKind::InvalidDescriptionFile(path.as_ref().to_path_buf()).into());
+        }
+
+        let ext = match path.as_ref().extension() {
+            Some(e) => e.to_str().unwrap(),
+            None => return Err(CrawlErrorKind::InvalidDescriptionFile(path.as_ref().to_path_buf()).into())
+        };
+
+        let parent = path.as_ref().parent().unwrap_or(Path::new("/"));
+
+        let mut file = fs::File::open(&path)?;
+
+        let desc = match ext {
+            "json" => serde_json::from_reader(file).map_err(|e| CrawlError::new(CrawlErrorKind::Error(Box::new(e)))),
+            "yaml" | "yml" => serde_yaml::from_reader(file).map_err(|e| CrawlError::new(CrawlErrorKind::Error(Box::new(e)))),
+            _ => Err(CrawlError::new(CrawlErrorKind::InvalidDescriptionFile(path.as_ref().to_path_buf()))),
+        }?;
+
+        
+        Target::new(parent, env, desc)
+        
+    }
+
     pub fn env(&self) -> &Environment {
         &self.e
     }
@@ -47,19 +75,6 @@ impl Target {
         &self.d
     }
 
-    // pub fn build(self, args: Args) -> CrawlResult<TargetRunner> {
-    //     let mut ctx = Context::new(
-    //         ParentOrRoot::Root(RootContext::new(self, args)),
-    //         None,
-    //         None,
-    //     );
-    //     self.build_with(&mut ctx)
-    // }
-
-    // pub fn build_with(self, ctx: &mut Context) -> CrawlResult<TargetRunner> {
-    //     let work = self.d.work.build(ctx)?;
-    //     Ok(TargetRunner { work: work })
-    // }
     pub fn build(self, args: Args) -> CrawlResult<TargetRunner> {
         
         let desc = self.d.clone();

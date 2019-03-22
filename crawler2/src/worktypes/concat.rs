@@ -9,6 +9,8 @@ use conveyor::{into_box, station_fn};
 use conveyor_work::package::{ConcatStream, Package};
 use std::fmt;
 use std::sync::Arc;
+
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Concat {
     pub name: String,

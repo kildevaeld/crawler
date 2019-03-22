@@ -8,17 +8,25 @@ use conveyor_work::package::Package;
 
 use std::sync::Arc;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Builder)]
+#[builder(pattern = "owned")]
 pub struct WorkDescription {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
+    // #[serde(skip_serializing_if = "Option::is_none", default)]
+    // #[builder(default = "None")]
+    // pub name: Option<String>,
     #[serde(flatten)]
     pub work: Box<WorkType>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default = "None")]
     pub then: Option<Box<WorkType>>,
 }
 
 impl WorkDescription {
+
+    pub fn new<W: WorkType + 'static>(work: W) -> WorkDescriptionBuilder {
+        WorkDescriptionBuilder::default().work(Box::new(work))
+    }
+
     pub fn request_station(&self, ctx: &mut Context) -> CrawlResult<WorkBox<Package>> {
         let ret = (
             self.work.request_station(ctx)?,

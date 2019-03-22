@@ -2,6 +2,7 @@ use conveyor::ConveyorError;
 use std::error::Error;
 use std::fmt;
 use std::result::Result;
+use std::path::PathBuf;
 
 pub type CrawlResult<T> = Result<T, CrawlError>;
 
@@ -12,6 +13,7 @@ pub enum CrawlErrorKind {
     Error(Box<dyn Error + Send + Sync>),
     NotFound(String),
     Io(std::io::Error),
+    InvalidDescriptionFile(PathBuf)
 }
 
 #[derive(Debug)]
@@ -54,5 +56,12 @@ impl From<ConveyorError> for CrawlError {
 impl From<std::io::Error> for CrawlError {
     fn from(error: std::io::Error) -> CrawlError {
         CrawlError::new(CrawlErrorKind::Io(error))
+    }
+}
+
+
+impl From<CrawlError> for ConveyorError {
+    fn from(error: CrawlError) -> ConveyorError {
+        ConveyorError::new(error)
     }
 }
